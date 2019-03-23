@@ -8,7 +8,7 @@ var app = express(),
 const database = require("./database");
     // Chargement de la page index.html
 
-console.log("coucou database connectée");
+
     app.use(express.json({extended : false})); // pour supporter JSON-encoded bodies name=blabla&firstname=gnagna...
 
     
@@ -44,14 +44,17 @@ app.post('/user', function (req, res) {
 
 app.get('/chat.html', function (req, res) {
   res.sendfile(__dirname + '/client/chat.html');
+  
 });
 
 io.sockets.on('connection', function (socket, pseudo) {
+    
     // Dès qu'on nous donne un pseudo, on le stocke en variable de session et on informe les autres personnes
     socket.on('nouveau_client', function(pseudo) {
         pseudo = ent.encode(pseudo);
         socket.pseudo = pseudo;
         socket.broadcast.emit('nouveau_client', pseudo);
+        console.log(pseudo, "connecté");
     });
 
     // Dès qu'on reçoit un message, on récupère le pseudo de son auteur et on le transmet aux autres personnes
@@ -59,7 +62,18 @@ io.sockets.on('connection', function (socket, pseudo) {
         message = ent.encode(message);
         socket.broadcast.emit('message', {pseudo: socket.pseudo, message: message});
     }); 
+
+
+    socket.on('disconnect', function(pseudo){
+        io.sockets.emit('logout', socket.pseudo);
+        console.log(socket.pseudo, "déconnecté");
+    });
 });
 
+const ip = '192.168.0.16';
+const port = 8181;
+server.listen(port, ip);
+console.log("coucou le chat est sur l'url : http://" + ip + ":" + port + "/chat.html" );
 
-server.listen(8080, '192.168.0.15');
+// changer l'ip si ne fonctionne pas
+// lancer le chat avec 'nodemon app.js'
